@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Machine Translation - English to French</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .translation-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .input-group textarea {
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            resize: vertical;
+            min-height: 120px;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .translate-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            margin: 20px 0;
+        }
+
+        .translate-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .translate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            background: #f8f9fa;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 120px;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            font-style: italic;
+        }
+
+        .error {
+            background: #ffe6e6;
+            border: 2px solid #ff6b6b;
+            color: #d63031;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            display: none;
+        }
+
+        .success {
+            background: #e6ffe6;
+            border: 2px solid #00b894;
+            color: #00b894;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            display: none;
+        }
+
+        .add-translation {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+        }
+
+        .add-translation h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stats-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .translation-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌍 Neural Machine Translation</h1>
+            <p>English to French Translation using Deep Learning</p>
+        </div>
+
+        <div class="main-content">
+            <div class="translation-section">
+                <div class="input-group">
+                    <label for="english-text">English Text</label>
+                    <textarea id="english-text" placeholder="Enter English text to translate..."></textarea>
+                </div>
+                
+                <div class="input-group">
+                    <label for="french-text">French Translation</label>
+                    <div id="french-text" class="result">Translation will appear here...</div>
+                </div>
+            </div>
+
+            <button id="translate-btn" class="translate-btn">🔄 Translate</button>
+            
+            <div id="loading" class="loading">Translating...</div>
+            <div id="error" class="error"></div>
+            <div id="success" class="success"></div>
+
+            <div class="add-translation">
+                <h3>📝 Add New Translation</h3>
+                <div class="form-row">
+                    <div class="input-group">
+                        <label for="new-english">English</label>
+                        <input type="text" id="new-english" placeholder="Enter English phrase">
+                    </div>
+                    <div class="input-group">
+                        <label for="new-french">French</label>
+                        <input type="text" id="new-french" placeholder="Enter French translation">
+                    </div>
+                </div>
+                <button id="add-btn" class="translate-btn">➕ Add Translation</button>
+            </div>
+
+            <div class="stats-section">
+                <h3>📊 Statistics</h3>
+                <div class="stats-grid" id="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="total-pairs">-</div>
+                        <div class="stat-label">Total Translation Pairs</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="model-status">-</div>
+                        <div class="stat-label">Model Status</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="last-updated">-</div>
+                        <div class="stat-label">Last Updated</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM elements
+        const englishText = document.getElementById('english-text');
+        const frenchText = document.getElementById('french-text');
+        const translateBtn = document.getElementById('translate-btn');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const success = document.getElementById('success');
+        const newEnglish = document.getElementById('new-english');
+        const newFrench = document.getElementById('new-french');
+        const addBtn = document.getElementById('add-btn');
+
+        // Translation function
+        async function translateText() {
+            const text = englishText.value.trim();
+            if (!text) {
+                showError('Please enter some text to translate');
+                return;
+            }
+
+            setLoading(true);
+            hideMessages();
+
+            try {
+                const response = await fetch('/translate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    frenchText.textContent = data.translation;
+                    showSuccess('Translation completed successfully!');
+                } else {
+                    showError(data.error || 'Translation failed');
+                }
+            } catch (err) {
+                showError('Network error: ' + err.message);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // Add translation function
+        async function addTranslation() {
+            const source = newEnglish.value.trim();
+            const target = newFrench.value.trim();
+
+            if (!source || !target) {
+                showError('Please enter both English and French text');
+                return;
+            }
+
+            try {
+                const response = await fetch('/add_translation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ source: source, target: target })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showSuccess('Translation added successfully!');
+                    newEnglish.value = '';
+                    newFrench.value = '';
+                    loadStats();
+                } else {
+                    showError(data.error || 'Failed to add translation');
+                }
+            } catch (err) {
+                showError('Network error: ' + err.message);
+            }
+        }
+
+        // Load statistics
+        async function loadStats() {
+            try {
+                const response = await fetch('/stats');
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('total-pairs').textContent = data.database.total_pairs || 0;
+                    document.getElementById('model-status').textContent = data.model_loaded ? '✅ Loaded' : '❌ Not Loaded';
+                    document.getElementById('last-updated').textContent = 
+                        data.database.last_updated ? new Date(data.database.last_updated).toLocaleDateString() : 'Never';
+                }
+            } catch (err) {
+                console.error('Failed to load stats:', err);
+            }
+        }
+
+        // Utility functions
+        function setLoading(isLoading) {
+            translateBtn.disabled = isLoading;
+            loading.style.display = isLoading ? 'block' : 'none';
+            if (isLoading) {
+                frenchText.textContent = 'Translating...';
+            }
+        }
+
+        function showError(message) {
+            error.textContent = message;
+            error.style.display = 'block';
+            success.style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            success.textContent = message;
+            success.style.display = 'block';
+            error.style.display = 'none';
+        }
+
+        function hideMessages() {
+            error.style.display = 'none';
+            success.style.display = 'none';
+        }
+
+        // Event listeners
+        translateBtn.addEventListener('click', translateText);
+        addBtn.addEventListener('click', addTranslation);
+
+        // Allow Enter key to translate
+        englishText.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                translateText();
+            }
+        });
+
+        // Load stats on page load
+        loadStats();
+    </script>
+</body>
+</html>
